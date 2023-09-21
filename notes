@@ -3,7 +3,7 @@ aws codecommit create-repository --repository-name copilotLab1 --repository-desc
 # Initialize git
 git init
 # Add remote
-git remote add origin https://git-codecommit.us-west-2.amazonaws.com/v1/repos/copilotLab1
+git remote add origin https://github.com/gcanales75/copilotLab1.git
 # Checkout remote main branch
 git checkout -b main
 
