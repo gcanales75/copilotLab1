@@ -1,0 +1,58 @@
+RelativeURLs=true
+CanonifyURLs=true
+languageCode = "en-US"
+defaultContentLanguage = "es"
+
+title = "saa_rj_website"
+theme = "learn"
+metaDataFormat = "yaml"
+defaultContentLanguageInSubdir= true
+
+uglyurls = false
+sectionPagesMenu = "main"
+pygmentsCodeFences = true
+pygmentsStyle = "monokai"
+
+googleAnalytics = ""
+
+[params]
+  description = ""
+  author = "Gilberto Canales"
+  disableBreadcrumb = false
+  disableNextPrev = false
+  themeVariant = "aws"
+  disableSearch = false
+  disableAssetsBusting = true
+  disableLanguageSwitchingButton = false
+  disableShortcutsTitle = true
+  disableInlineCopyToClipBoard = true
+
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
+
+[privacy.youtube]
+    disable = false
+    privacyEnhanced = true
+[privacy.twitter]
+    disable = false
+    enableDNT = true
+    simple = true
+
+[markup]
+  defaultMarkdownHandler = "goldmark"
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+defaultContentLanguage = 'es'
+[Languages]
+  [Languages.es]
+    contentDir = "content/es"
+    title = "AWS Training & Certification "
+    weight = 1
+    languageName = "Spanish"
+#  [Languages.pt]
+#    contentDir = "content/pt"
+#    title = "AWS Training & Certification "
+#    weight = 2
+#    languageName = "Português"

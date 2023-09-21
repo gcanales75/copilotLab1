@@ -1,0 +1,14 @@
+# Create AWS CodeCommit repo
+aws codecommit create-repository --repository-name copilotLab1 --repository-description "copilot lab 1" --region us-west-2
+# Initialize git
+git init
+# Add remote
+git remote add origin https://git-codecommit.us-west-2.amazonaws.com/v1/repos/copilotLab1
+# Checkout remote main branch
+git checkout -b main
+
+
+
+git add .
+git commit -m "update files"
+git push -u origin main

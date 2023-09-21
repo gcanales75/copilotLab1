@@ -1,0 +1,5 @@
+## Zip website content
+
+filename="website_$(date +'%Y-%m-%d_%H-%M-%S').zip"
+echo $filename
+zip -r deployments/$filename * -x "*.DS_Store" -x "deployments/*"

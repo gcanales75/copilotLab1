@@ -1,0 +1,187 @@
+**Paso 3: Agregar variables de entorno**
+
+Existen 2 enfoques para definir variables de entorno para sus aplicaciones. 1) variables globales para un servicio específico, o 2) variables para un ambiente específico con su servicio.
+
+Para definir variables abra el archivo `copilot/svc-api-markdown/manifest.yml` y desplácese hacia abajo hasta que vea las siguientes líneas:
+
+```
+#variables:                    # Pass environment variables as key value pairs.
+#  LOG_LEVEL: info
+```
+
+*Descomente* esas líneas y agregue una variable de la siguiente manera y guarde los cambios.
+
+```
+variables:
+  LOG_LEVEL: info
+  VAR_1: "This is a variable for any environments"
+```
+
+Si desea especificar variables de entorno para un ambiente particular, puede desplazarse hacia abajo hasta encontrar la siguiente sección:
+
+```
+#environments:
+#  test:
+#    count: 2               # Number of tasks to run for the "test" environment.
+#    deployment:            # The deployment strategy for the "test" environment.
+#       rolling: 'recreate' # Stops existing tasks before new ones are started for faster deployments.
+```
+
+Cambia esa sección a:
+
+```
+environments:
+  staging:
+    variables:
+      VAR_2: "This is a variable only for staging environment"
+  production:
+    variables:
+      VAR_2: "This is a variable only for production environment"
+```
+
+**Paso 4: Agregar secretos**
+
+Puede usar el comando `copilot secret init` para agregar secretos a su aplicación. La forma en que funciona es que **Copilot** te avisará el nombre y el valor (enmascarado) de tus secretos y los almacenará usando **SSM Parameter Store**. Luego, debe agregar manualmente el nombre de la variable **SSM Parameter Store** en su archivo de manifiesto de servicio.
+
+Ejecute el siguiente comando:
+
+```
+copilot secret init
+```
+
+**Copiloto** le solicitará que nombre el secreto y use `SECRET_VAR` como nombre.
+
+```
+What would you like to name this secret? [? for help] SECRET_VAR
+```
+
+A continuación, Copilot te solicitará ingresar el valor de tu secreto para cada ambiente, production y staging.
+
+Por ejemplo, aquí ingrese “Psst, esto es un secreto” como valor secreto. En la práctica, este podría ser su token API para servicios de terceros, o sus credenciales de base de datos.
+
+```
+Secret name:  SECRET_VAR
+  What is the value of secret SECRET_VAR in environment production? [? for help] **************
+```
+
+Después, seguido de otro *prompt*:
+
+```
+Secret name:  SECRET_VAR
+Production secret value: 
+  What is the value of secret SECRET_VAR in environment staging? [? for help] **************
+```
+
+Cuando haya ingresado la variable secreta para cada ambiente que tenga, **Copilot** arrojará los siguientes resultados:
+
+```
+Secret name:  SECRET_VAR
+Production secret value: 
+Staging secret value: 
+...Put secret SECRET_VAR to environment production and staging
+✔ Successfully put secret SECRET_VAR in environment production as /copilot/module1/production/secrets/SECRET_VAR.
+✔ Secret SECRET_VAR already exists in environment staging as /copilot/module1/staging/secrets/SECRET_VAR. Did not overwrite. 
+Note: If you want to overwrite an existing secret, use the `--overwrite` flag.
+You can refer to these secrets from your manifest file by editing the `secrets` section.
+
+secrets:
+    SECRET_VAR: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/SECRET_VAR
+```
+
+**Copilot** luego almacenará su secreto en **SSM Parameter Store**. Puede ir **SSM Parameter Store** para verificar el secreto recién creado.
+
+El siguiente paso que debes hacer es copiar el nombre de la variable de la salida de **Copilot**:
+
+```
+SECRET_VAR: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/SECRET_VAR
+```
+
+Luego, abre tu archivo `copilot/svc-api-markdown/manifest.yml` y desplázate hacia abajo hasta encontrar las siguientes líneas:
+
+```
+#secrets:                      # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
+#  GITHUB_TOKEN: GITHUB_TOKEN  # The key is the name of the environment variable, the value is the name of the SSM parameter.
+```
+
+Y cámbialos a:
+
+```
+secrets:
+  SECRET_VAR: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/SECRET_VAR
+```
+
+**Paso 5: Redespliegue de servicios**
+
+Una vez que haya definido y configurado las variables de entorno y los secretos, necesita reponer los servicios para ambos entornos.
+
+Ejecute el siguiente comando para el ambiente de *staging*:
+
+```
+copilot svc deploy --name svc-api-markdown --env staging
+```
+
+☕️ Pausa para el café. Esto te llevará alrededor de 3-8 minutos.
+
+Una vez hecho esto, también necesita implementar en el entorno de producción:
+
+```
+copilot svc deploy --name svc-api-markdown --env production
+```
+
+☕️ Nueva pausa para el café. Esto te llevará alrededor de 3-8 minutos.
+
+**Paso 6: Validar la aplicación**
+
+Para verificar las variables de entorno si se han inyectado correctamente en tu aplicación, puedes ejecutar el siguiente comando:
+
+```
+copilot svc show --name svc-api-markdown
+```
+
+Debajo de la sección Variables, verá que se listan todas las variables de entorno que ha definido en este módulo.
+
+```
+Variables
+
+  Name                                Container  Environment  Value
+  ----                                ---------  -----------  -----
+  COPILOT_APPLICATION_NAME            svc-api    production   module1
+    "                                   "        staging        "
+  COPILOT_ENVIRONMENT_NAME              "        production   production
+    "                                   "        staging      staging
+  COPILOT_LB_DNS                        "        production   modul-Publi-XYZ-XYZ.ap-southeast-1.elb.amazonaws.com
+    "                                   "        staging      modul-Publi-XYZ-XYZ.ap-southeast-1.elb.amazonaws.com
+  COPILOT_SERVICE_DISCOVERY_ENDPOINT    "        production   production.module1.local
+    "                                   "        staging      staging.module1.local
+  COPILOT_SERVICE_NAME                  "        production   svc-api
+    "                                   "        staging        "
+  LOG_LEVEL                             "          "          info
+  MARKDOWNTABLE_NAME                    "        production   module1-production-svc-api-markdown-table
+    "                                   "        staging      module1-staging-svc-api-markdown-table
+  VAR_1                                 "          "          This is a variable for any environments
+  VAR_2                                 "          "          This is a variable only for staging environment
+```
+
+
+En cuanto al secreto, lo puedes ver en la sección Secretos:
+
+```
+Secrets
+
+  Name        Container         Environment  Value From
+  ----        ---------         -----------  ----------
+  SECRET_VAR  svc-api-markdown  production   parameter//copilot/module1/production/secrets/SECRET_VAR
+    "           "               staging      parameter//copilot/module1/staging/secrets/SECRET_VAR
+```
+
+Para usar las variables de entorno o secretos puede usar el siguiente código:
+
+```
+VARIABLE = os.getenv(“<VARIABLE_NAME>”)
+```
+
+Para verificar si los secretos están almacenados correctamente en el almacén de parámetros de AWS Systems Manager, puede ir a la consola de **SSM Parameter Store**.
+
+Aquí hay una captura de pantalla para un ejemplo:
+
+<img src="images/module-2-secrets.png" alt="drawing"/>
